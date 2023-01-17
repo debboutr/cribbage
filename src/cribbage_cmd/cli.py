@@ -16,8 +16,21 @@ Why does this file exist, and why not put this in __main__?
 """
 import click
 
+from .deck import Deck
+from .player import Opponent
+from .player import Player
+
 
 @click.command()
 @click.argument('names', nargs=-1)
 def main(names):
     click.echo(repr(names))
+    p = Player("rick")
+    o = Opponent("guy")
+    deck = Deck()
+    deck.deal([p, o])
+    p.get_discards()
+    o.get_discards()
+    while sum([len(p.hand), len(o.hand)]):
+        p.lay_card()
+        o.lay_card()
