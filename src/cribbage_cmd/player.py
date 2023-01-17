@@ -42,6 +42,8 @@ class Contestant:
 
     def check_points(self, card):
         print(f"{self.peg.hand=}")
+        if not self.peg.last:
+            return
         if card.digit == self.peg.last.digit:
             self.score += 2
         if self.peg.score + card.value in (15, 31):
@@ -149,6 +151,12 @@ class Contestant:
                 flush += 1
         return fif, flush, pairs, runs
 
+    def get(self, card):
+        self.hand.append(card)
+
+    def count_cards(self):
+        return sum(self._count_hand())
+
 
 class Player(Contestant):
     def get_discards(self):
@@ -227,7 +235,6 @@ class Opponent(Contestant):
         """Takes a hand (list of 6 Cards) and finds the one with the highest
         points
         """
-        # print(f"{self.hand=}")
         hold = list(self.hand)
         combs = list(combinations(self.hand, 4))
         hands = []
@@ -240,16 +247,10 @@ class Opponent(Contestant):
         hands = sorted(hands, key=lambda h: h.count, reverse=True)
         high_hand = hands[0].count
         highest = [c for c in hands if c.count == high_hand]
-        # print(f"{highest=}")
         for count in highest:
-            # if pairs, look for adjacent card values
-            # print(f"{count=}")
-            # print(f"{count.runs=}")
+            # if pairs, look for adjacent card values when > 1
             pass
-        # print(f"{count.cards=}")
-        # print(f"{count.count=}")
         discarded = [card for card in hold if card not in count.cards]
         self.hand = count.cards
         # print(f"{self.hand=}")
-        # print(f"{discarded=}")
         return discarded  # send back the last one for now
