@@ -2,11 +2,10 @@ from collections import namedtuple
 from itertools import combinations
 
 import click
+from colorama import Fore
+from colorama import Style
 
 from cribbage_cmd.deck import Deck
-
-# from colorama import Fore
-# from colorama import Style
 
 
 def top_row(score):
@@ -20,7 +19,8 @@ Hand = namedtuple("Hand", "index cards count fifteens flush pairs runs")
 
 class Cribbage:
 
-    char = "!"
+    char = "O"
+    hole_color = Fore.GREEN
 
     def __init__(self):
         self.hand = []
@@ -54,23 +54,27 @@ class Contestant:
         self.hand = hand if hand else []
         self.__score = 0
         self.__last_point = 0
-        # self.__peg_char = self.peg_char()
+        self.peg_color = self.set_peg_color(Fore.RED)
         # istantiating with a name makes the first dealer
         self.is_dealer = False if not name else True
         Contestant.peg = Cribbage()
 
-    # def set_style(line, peg, hole_color, peg_color):
-    #     flop = ""
-    #     for t in line:
-    #         if t == ".":
-    #             flop += (hole_color + t)
-    #         elif t == peg:
-    #             flop += (Style.BRIGHT + peg_color + t + Style.RESET_ALL)
-    #         else:
-    #             flop += t
-    #     return flop + Style.RESET_ALL
+    def set_peg_color(self, color):
+        self.peg_color = color
+        return color
 
-    def get_lines(self):
+    def set_style(self, line):
+        flop = ""
+        for t in line:
+            if t == "·":
+                flop += self.peg.hole_color + t
+            elif t == self.peg.char:
+                flop += Style.BRIGHT + self.peg_color + t + Style.RESET_ALL
+            else:
+                flop += t
+        return flop + Style.RESET_ALL
+
+    def get_lines(self, style=False):
         top, bottom = ["· " + " ".join(["·" * 5] * 6)] * 2
         idxs = [self.score, self.last_point()]
         if sum(idxs) == 0:
@@ -96,10 +100,14 @@ class Contestant:
                     i = 30 - (i % 30)
                     i += i // 5
                     bottom = bottom[: i + 2] + self.peg.char + bottom[i + 3 :]
+        if style:
+            ...
         return [top, bottom]
 
-    def make_lines(self):
-        top, bottom = self.get_lines()
+    def show_lines(self, style=True):
+        top, bottom = self.get_lines(style=style)
+        top = self.set_style(top)
+        bottom = self.set_style(bottom)
         # top = set_style(top, "!", hole_color=hole_color, peg_color=peg_color)
         # bottom = set_style(bottom, "!", hole_color=hole_color, peg_color=peg_color)
 

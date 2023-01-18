@@ -15,6 +15,7 @@ Why does this file exist, and why not put this in __main__?
   Also see (1) from http://click.pocoo.org/5/setuptools/#setuptools-integration
 """
 import click
+from colorama import Fore
 
 from .deck import Deck
 from .player import Cribbage
@@ -42,13 +43,14 @@ def main(names, peg_char):
     #         Player.peg.reset()
     if peg_char:
         Cribbage.set_char(peg_char)
+    p.set_peg_color(Fore.CYAN)
     p.set_score(101)
     p.set_score(4)
     p.set_score(8)
     o.set_score(22)
     o.set_score(5)
     click.secho("_" * 37, fg="yellow")
-    click.echo(p.make_lines())
+    click.echo(p.show_lines())
     click.echo(click.style(" " * 7 + "     ".join(["|"] * 5), fg="yellow"))
-    click.echo(o.make_lines())
+    click.echo(o.show_lines())
     click.secho("‾" * 37, fg="yellow")
