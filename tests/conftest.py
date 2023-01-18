@@ -27,18 +27,21 @@ def prompt_player():
 
 
 @pytest.fixture
-def discard_player():
+def player_hand():
+    return [
+        Card("S|A"),
+        Card("S|K"),
+        Card("S|Q"),
+        Card("S|J"),
+        Card("S|1"),
+        Card("S|9"),
+    ]
+
+
+@pytest.fixture
+def discard_player(player_hand):
     with patch.object(click, "prompt", lambda x: "42"):
-        player = Player(
-            hand=[
-                Card("S|A"),
-                Card("S|K"),
-                Card("S|Q"),
-                Card("S|J"),
-                Card("S|1"),
-                Card("S|9"),
-            ]
-        )
+        player = Player(hand=player_hand)
         yield player
 
 

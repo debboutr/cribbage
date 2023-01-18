@@ -5,10 +5,23 @@ import click
 
 from cribbage_cmd.deck import Deck
 
+# from colorama import Fore
+# from colorama import Style
+
+
+def top_row(score):
+    """find if value should be on first row or second of board"""
+    val = (score // 30) % 2 if (score % 30) else ((score - 1) // 30) % 2
+    return val ^ 1
+
+
 Hand = namedtuple("Hand", "index cards count fifteens flush pairs runs")
 
 
 class Cribbage:
+
+    char = "!"
+
     def __init__(self):
         self.hand = []
         self.go = 0
@@ -18,8 +31,12 @@ class Cribbage:
         return self.hand[0] if self.hand else None
 
     @property
-    def score(self):
+    def count(self):
         return sum([c.value for c in self.hand])
+
+    @classmethod
+    def set_char(cls, char):
+        cls.char = char
 
     def point(self, card):
         self.hand.append(card)
@@ -35,37 +52,101 @@ class Contestant:
     def __init__(self, name=None, hand=None):
         self.name = name
         self.hand = hand if hand else []
-        self.score = 0
+        self.__score = 0
+        self.__last_point = 0
+        # self.__peg_char = self.peg_char()
         # istantiating with a name makes the first dealer
         self.is_dealer = False if not name else True
         Contestant.peg = Cribbage()
 
+    # def set_style(line, peg, hole_color, peg_color):
+    #     flop = ""
+    #     for t in line:
+    #         if t == ".":
+    #             flop += (hole_color + t)
+    #         elif t == peg:
+    #             flop += (Style.BRIGHT + peg_color + t + Style.RESET_ALL)
+    #         else:
+    #             flop += t
+    #     return flop + Style.RESET_ALL
+
+    def get_lines(self):
+        top, bottom = [". " + " ".join(["." * 5] * 6)] * 2
+        idxs = [self.score(), self.last_point()]
+        if sum(idxs) == 0:
+            return [self.peg.char + top[1:]] * 2
+        for i in idxs:
+            if i == 0:
+                top = self.peg.char + top[1:]
+            elif i > 120:
+                bottom = self.peg.char + bottom[1:]
+            elif top_row(i):
+                if i == 0:
+                    if self.peg.char == top[0]:
+                        bottom = self.peg.char + bottom[i + 1 :]
+                    top = self.peg.char + top[i + 1 :]
+                else:
+                    i -= 1
+                    i += i // 5
+                    top = top[: i + 2] + self.peg.char + top[i + 3 :]
+            else:
+                if i == 0:
+                    bottom = self.peg.char + bottom[1:]
+                else:
+                    i = 30 - (i % 30)
+                    i += i // 5
+                    bottom = bottom[: i + 2] + self.peg.char + bottom[i + 3 :]
+        return [top, bottom]
+
+    def make_lines(self):
+        top, bottom = self.get_lines()
+        # top = set_style(top, "!", hole_color=hole_color, peg_color=peg_color)
+        # bottom = set_style(bottom, "!", hole_color=hole_color, peg_color=peg_color)
+
+        return f"{top}\n{bottom}"
+
+    # def peg_char(self, char="!"):
+    #     self.__peg_char = char
+    #     return self.__peg_char
+
+    def last_point(self, val=0):
+        return self.__score - self.__last_point
+
+    def score(self, val=0):
+        if val:
+            self._set_score(val)
+        return self.__score
+
+    def _set_score(self, val):
+        self.__last_point = val
+        self.__score += val
+
     def check_points(self, card):
-        print(f"{self.peg.hand=}")
+        # print(f"{self.peg.hand=}")
         if not self.peg.last:
             return
         if card.digit == self.peg.last.digit:
-            self.score += 2
-        if self.peg.score + card.value in (15, 31):
+            self.score(2)
+        if self.peg.count + card.value in (15, 31):
             # print(f"{card=}")
-            self.score += 2
-        # print(f"{self.score=}")
+            self.score(2)
+        # print(f"{self.score()=}")
 
     def play_card(self, card=None):
         if not card:
-            playable = [c for c in self.hand if (c.value + self.peg.score) <= 31]
+            playable = [c for c in self.hand if (c.value + self.peg.count) <= 31]
             card = playable.pop()
         else:
-            playable = (card.value + self.peg.score) <= 31
-        if self.peg.score < 31 and playable:
+            playable = (card.value + self.peg.count) <= 31
+        if self.peg.count < 31 and playable:
             self.check_points(card)
             self.peg.point(card)
         else:
             if self.peg.go:
                 # print(f"{self.hand=}")
-                # print(f"{self.peg.score=}")
+                # print(f"{self.peg.count=}")
                 self.peg.reset()
-                self.score += 1  # this would be the last person
+                self.score(1)  # this would be the last person
                 return "GONE"
                 # need to know the last person to have played a card for
                 # point
@@ -178,32 +259,38 @@ class Player(Contestant):
         The dealer will have a similar method.
         Both will use play_card.
         """
-        options = list(range(len(self.hand) + 1))
-        click.echo(f"{self.peg.score=}")
+        playable = [c for c in self.hand if (c.value + self.peg.count) <= 31]
+        if not playable:
+            return "GO"
+        options = list(range(1, len(self.hand) + 1)) if self.hand else []
+        if not options:
+            return "GO"
+        click.echo(f"{self.peg.count=}")
         click.echo(f"HAND: {self.cards}")
         click.echo('IDXS: ' + '    '.join([str(i + 1) for i in range(len(self.hand))]))
-        ret = click.prompt("what you wanna do?")
-        if not ret.isnumeric():
+        response = click.prompt("whatyuwannado?")
+        if not response.isnumeric():
             click.echo("You must enter a number!")
-            self.lay_card()
-        ret = int(ret)
-        click.echo(f"{self.hand=}")
-        if ret not in options or ret == 0:
-            click.echo(f"Please enter one of the following numbers {', '.join(map(str, options))}")
             return self.lay_card()
-        click.echo(f"{ret=}")
-        card = self.hand.pop(ret - 1)
+        click.echo(f"{response=}")
+        click.echo(f"{options=}")
+        if options and (response := int(response)) not in options or response == 0:
+            click.echo(f"TRY AGAIN: Must be one of : {', '.join(map(str, options))}")
+            return self.lay_card()
+        click.echo(f"{self.hand=}")
         click.echo(self.cards)
+        card = self.hand.pop(response - 1)
         self.peg.point(card)
         return card
 
 
 class Opponent(Contestant):
     def lay_card(self):
-        playable = [c for c in self.hand if (c.value + self.peg.score) <= 31]
+        # click.echo(f"in dealer: {self.peg.count=}")
+        playable = [c for c in self.hand if (c.value + self.peg.count) <= 31]
         if not playable:
             return "GO"
-        card = playable.pop()
+        card = self.hand.pop()
         self.check_points(card)
         self.peg.point(card)
         return card
@@ -212,15 +299,15 @@ class Opponent(Contestant):
     #     if not card:
     #         card = playable.pop()
     #     else:
-    #         playable = (card.value + self.peg.score) <= 31
-    #     if self.peg.score < 31 and playable:
+    #         playable = (card.value + self.peg.count) <= 31
+    #     if self.peg.count < 31 and playable:
     #         self.peg.point(card)
     #     else:
     #         if self.peg.go:
     #             # print(f"{self.hand=}")
-    #             # print(f"{self.peg.score=}")
+    #             # print(f"{self.peg.count=}")
     #             self.peg.reset()
-    #             self.score += 1  # this would be the last person
+    #             self.score(1)  # this would be the last person
     #             return "GONE"
     #             # need to know the last person to have played a card for
     #             # point

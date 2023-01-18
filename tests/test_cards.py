@@ -36,30 +36,30 @@ def test_player_count(player):
 
 def test_pegging_count(player, dealer):
     player.peg.point(Card("S|K"))
-    assert player.peg.score == 10
-    assert dealer.peg.score == 10
+    assert player.peg.count == 10
+    assert dealer.peg.count == 10
     dealer.peg.point(Card("S|5"))
-    assert player.peg.score == 15
-    assert dealer.peg.score == 15
+    assert player.peg.count == 15
+    assert dealer.peg.count == 15
     player.peg.point(Card("S|2"))
-    assert player.peg.score == 17
-    assert dealer.peg.score == 17
+    assert player.peg.count == 17
+    assert dealer.peg.count == 17
 
 
 def test_running_score_fail(player, dealer):
     player.play_card(Card("S|7"))
-    assert dealer.peg.score == 7
+    assert dealer.peg.count == 7
     dealer.play_card(Card("S|K"))
-    assert player.peg.score == 17
+    assert player.peg.count == 17
     player.play_card(Card("D|K"))
-    assert dealer.peg.score == 27
+    assert dealer.peg.count == 27
     ret = dealer.play_card(Card("D|K"))
     assert dealer.peg.go == 1
     assert ret == "GO"
-    assert player.peg.score == 27
+    assert player.peg.count == 27
     # card = player.lay_card()
     ret = player.play_card(Card("D|K"))
-    assert player.peg.score == 0
+    assert player.peg.count == 0
     assert ret == "GONE"
 
 
@@ -67,7 +67,7 @@ def test_player_prompt_returns_valid_card(prompt_player, deck):
     deck.deal([prompt_player])
     card = prompt_player.lay_card()
     assert type(card) == Card
-    assert prompt_player.peg.score == card.value
+    assert prompt_player.peg.count == card.value
 
 
 def test_player_discard(discard_player):
