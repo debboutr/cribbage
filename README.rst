@@ -29,21 +29,21 @@ Overview
     :alt: Coverage Status
     :target: https://codecov.io/github/debboutr/cribbage
 
-.. |version| image:: https://img.shields.io/pypi/v/cribbage-cmd.svg
-    :alt: PyPI Package latest release
-    :target: https://pypi.org/project/cribbage-cmd
+.. .. |version| image:: https://img.shields.io/pypi/v/cribbage-cmd.svg
+..     :alt: PyPI Package latest release
+..     :target: https://pypi.org/project/cribbage-cmd
 
-.. |wheel| image:: https://img.shields.io/pypi/wheel/cribbage-cmd.svg
-    :alt: PyPI Wheel
-    :target: https://pypi.org/project/cribbage-cmd
+.. .. |wheel| image:: https://img.shields.io/pypi/wheel/cribbage-cmd.svg
+..     :alt: PyPI Wheel
+..     :target: https://pypi.org/project/cribbage-cmd
 
-.. |supported-versions| image:: https://img.shields.io/pypi/pyversions/cribbage-cmd.svg
-    :alt: Supported versions
-    :target: https://pypi.org/project/cribbage-cmd
+.. .. |supported-versions| image:: https://img.shields.io/pypi/pyversions/cribbage-cmd.svg
+..     :alt: Supported versions
+..     :target: https://pypi.org/project/cribbage-cmd
 
-.. |supported-implementations| image:: https://img.shields.io/pypi/implementation/cribbage-cmd.svg
-    :alt: Supported implementations
-    :target: https://pypi.org/project/cribbage-cmd
+.. .. |supported-implementations| image:: https://img.shields.io/pypi/implementation/cribbage-cmd.svg
+..     :alt: Supported implementations
+..     :target: https://pypi.org/project/cribbage-cmd
 
 .. |commits-since| image:: https://img.shields.io/github/commits-since/debboutr/cribbage/v0.0.0.svg
     :alt: Commits since latest release
