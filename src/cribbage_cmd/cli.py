@@ -23,34 +23,42 @@ from .player import Opponent
 from .player import Player
 
 
+def show_board(p, o):
+    click.secho("_" * 37, fg="yellow")
+    click.echo(p.show_lines())
+    click.echo(click.style(" " * 7 + "     ".join(["|"] * 5), fg="yellow"))
+    click.echo(o.show_lines())
+    click.secho("‾" * 37, fg="yellow")
+
+
 @click.command()
 @click.argument('names', nargs=-1)
 @click.option("--peg-char", default="", help="Enter character to represent peg on board. Can only be ONE character!")
 def main(names, peg_char):
 
     # click.echo(repr(names))
+    if peg_char:
+        Cribbage.set_char(peg_char)
+    # Cribbage.set_hole("o")
     p = Player("rick")
     o = Opponent("guy")
     deck = Deck()
     deck.deal([p, o])
-    # p.get_discards()
-    # o.get_discards()
-    # while sum([len(p.hand), len(o.hand)]):
-    #     ps = p.lay_card()
-    #     os = o.lay_card()
-    #     print(f"{ps=} || {os=}")
-    #     if all([ps == "GO",os == "GO"]):
-    #         Player.peg.reset()
-    if peg_char:
-        Cribbage.set_char(peg_char)
-    p.set_peg_color(Fore.CYAN)
-    p.set_score(101)
-    p.set_score(4)
-    p.set_score(8)
-    o.set_score(22)
-    o.set_score(5)
-    click.secho("_" * 37, fg="yellow")
-    click.echo(p.show_lines())
-    click.echo(click.style(" " * 7 + "     ".join(["|"] * 5), fg="yellow"))
-    click.echo(o.show_lines())
-    click.secho("‾" * 37, fg="yellow")
+    p.set_peg_color(Fore.BLUE)
+    show_board(p, o)
+    p.get_discards()
+    o.get_discards()
+    Cribbage.cut = deck.cut_cards()
+    while sum([len(p.hand), len(o.hand)]):
+        ps = p.lay_card()
+        os = o.lay_card()
+        print(f"player plays: {ps}")
+        print(f"opponent plays: {os}")
+        # print(f"{ps=} || {os=}")
+        if all([ps == "GO", os == "GO"]):
+            Player.peg.reset()
+    c = o.count_cards()
+    show_board(p, o)
+    click.echo(f"{o.peg.hand}")
+    click.echo(f"{p.peg.cut}")
+    click.echo(f"out of hand, opponent count: {c}")

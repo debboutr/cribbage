@@ -14,35 +14,45 @@ def top_row(score):
     return val ^ 1
 
 
-Hand = namedtuple("Hand", "index cards count fifteens flush pairs runs")
+Hand = namedtuple("Hand", "cards count fifteens flush pairs runs")
 
 
 class Cribbage:
 
     char = "O"
+    hole = "·"
     hole_color = Fore.GREEN
+    cut = None
 
     def __init__(self):
+        self.played = []
         self.hand = []
         self.go = 0
 
     @property
     def last(self):
-        return self.hand[0] if self.hand else None
+        return self.played[-1] if self.played else None
 
     @property
     def count(self):
-        return sum([c.value for c in self.hand])
+        return sum([c.value for c in self.played])
+
+    @classmethod
+    def set_hole(cls, char):
+        cls.hole = char
 
     @classmethod
     def set_char(cls, char):
         cls.char = char
 
+    def add_to_crib(self, discards):
+        self.hand += discards
+
     def point(self, card):
-        self.hand.append(card)
+        self.played.append(card)
 
     def reset(self):
-        self.hand = []
+        self.played = []
 
 
 class Contestant:
@@ -66,7 +76,7 @@ class Contestant:
     def set_style(self, line):
         flop = ""
         for t in line:
-            if t == "·":
+            if t == self.peg.hole:
                 flop += self.peg.hole_color + t
             elif t == self.peg.char:
                 flop += Style.BRIGHT + self.peg_color + t + Style.RESET_ALL
@@ -75,7 +85,8 @@ class Contestant:
         return flop + Style.RESET_ALL
 
     def get_lines(self, style=False):
-        top, bottom = ["· " + " ".join(["·" * 5] * 6)] * 2
+        h = self.peg.hole
+        top, bottom = [f"{h} " + " ".join([f"{h}" * 5] * 6)] * 2
         idxs = [self.score, self.last_point()]
         if sum(idxs) == 0:
             return [self.peg.char + top[1:]] * 2
@@ -110,7 +121,8 @@ class Contestant:
         bottom = self.set_style(bottom)
         # top = set_style(top, "!", hole_color=hole_color, peg_color=peg_color)
         # bottom = set_style(bottom, "!", hole_color=hole_color, peg_color=peg_color)
-
+        if self.name == "guy":
+            top, bottom = bottom, top
         return f"{top}\n{bottom}"
 
     # def peg_char(self, char="!"):
@@ -134,9 +146,12 @@ class Contestant:
             return
         if card.digit == self.peg.last.digit:
             self.set_score(2)
+            click.secho(f"{self.name} pegs 2 points {self.peg.last} = {card}!", fg="cyan")
         if self.peg.count + card.value in (15, 31):
             # print(f"{card=}")
+            out = 15 if self.peg.count < 15 else 31
             self.set_score(2)
+            click.secho(f"{self.name} pegs 2 points for {out}!", fg="cyan")
         # print(f"{self.score=}")
 
     def play_card(self, card=None):
@@ -253,12 +268,14 @@ class Player(Contestant):
         value = click.prompt("Enter 2 numbers for cards you want to give away")
         if len(value) != 2:
             click.echo("Select two cards please!")
-            value = self.get_discards()
+            return self.get_discards()
         if not value.isnumeric():
             click.echo("Please select by number.")
+            return self.get_discards()
         discarded = []
         for idx in sorted(value, reverse=True):
             discarded.append(self.hand.pop(int(idx) - 1))
+        self.peg.add_to_crib(discarded)
         return discarded
 
     def lay_card(self):
@@ -279,14 +296,15 @@ class Player(Contestant):
         if not response.isnumeric():
             click.echo("You must enter a number!")
             return self.lay_card()
-        click.echo(f"{response=}")
-        click.echo(f"{options=}")
+        # click.echo(f"{response=}")
+        # click.echo(f"{options=}")
         if options and (response := int(response)) not in options or response == 0:
             click.echo(f"TRY AGAIN: Must be one of : {', '.join(map(str, options))}")
             return self.lay_card()
-        click.echo(f"{self.hand=}")
-        click.echo(self.cards)
+        # click.echo(f"{self.hand=}")
+        # click.echo(self.cards)
         card = self.hand.pop(response - 1)
+        self.check_points(card)
         self.peg.point(card)
         return card
 
@@ -297,7 +315,7 @@ class Opponent(Contestant):
         playable = [c for c in self.hand if (c.value + self.peg.count) <= 31]
         if not playable:
             return "GO"
-        card = self.hand.pop()
+        card = self.hand.pop(self.hand.index(playable[0]))
         self.check_points(card)
         self.peg.point(card)
         return card
@@ -323,7 +341,11 @@ class Opponent(Contestant):
     #             return "GO"
 
     def get_discards(self):
-        return self.find_highest()
+        hand = self.find_highest()
+        discarded = [card for card in self.hand if card not in hand.cards]
+        self.hand = hand.cards
+        self.peg.add_to_crib(discarded)
+        return discarded
 
     def find_highest(self):
         """Takes a hand (list of 6 Cards) and finds the one with the highest
@@ -333,10 +355,9 @@ class Opponent(Contestant):
         combs = list(combinations(self.hand, 4))
         hands = []
         for i, comb in enumerate(combs):
-            self.hand = list(comb)  # will need to think about this for dealer
+            self.hand = list(comb)
             out = self._count_hand()
-            count = sum([*out])
-            hand = Hand(i, list(comb), count, *out)
+            hand = Hand(list(comb), sum([*out]), *out)
             hands.append(hand)
         hands = sorted(hands, key=lambda h: h.count, reverse=True)
         high_hand = hands[0].count
@@ -344,7 +365,6 @@ class Opponent(Contestant):
         for count in highest:
             # if pairs, look for adjacent card values when > 1
             pass
-        discarded = [card for card in hold if card not in count.cards]
-        self.hand = count.cards
         # print(f"{self.hand=}")
-        return discarded  # send back the last one for now
+        self.hand = hold
+        return count  # send back the last one for now

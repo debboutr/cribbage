@@ -1,3 +1,4 @@
+from random import choice
 from random import shuffle
 
 
@@ -41,6 +42,9 @@ class Deck:
     def _build(self):
         self.cards = [Card(f"{s}|{v}") for s in self.suits for v in self.order]
         shuffle(self.cards)
+
+    def cut_cards(self):
+        return choice(self.cards)
 
     def show(self):
         for c in self.cards:
