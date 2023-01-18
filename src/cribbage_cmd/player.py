@@ -71,8 +71,8 @@ class Contestant:
     #     return flop + Style.RESET_ALL
 
     def get_lines(self):
-        top, bottom = [". " + " ".join(["." * 5] * 6)] * 2
-        idxs = [self.score(), self.last_point()]
+        top, bottom = ["· " + " ".join(["·" * 5] * 6)] * 2
+        idxs = [self.score, self.last_point()]
         if sum(idxs) == 0:
             return [self.peg.char + top[1:]] * 2
         for i in idxs:
@@ -112,12 +112,11 @@ class Contestant:
     def last_point(self, val=0):
         return self.__score - self.__last_point
 
-    def score(self, val=0):
-        if val:
-            self._set_score(val)
+    @property
+    def score(self):
         return self.__score
 
-    def _set_score(self, val):
+    def set_score(self, val):
         self.__last_point = val
         self.__score += val
 
@@ -126,11 +125,11 @@ class Contestant:
         if not self.peg.last:
             return
         if card.digit == self.peg.last.digit:
-            self.score(2)
+            self.set_score(2)
         if self.peg.count + card.value in (15, 31):
             # print(f"{card=}")
-            self.score(2)
-        # print(f"{self.score()=}")
+            self.set_score(2)
+        # print(f"{self.score=}")
 
     def play_card(self, card=None):
         if not card:
@@ -146,7 +145,7 @@ class Contestant:
                 # print(f"{self.hand=}")
                 # print(f"{self.peg.count=}")
                 self.peg.reset()
-                self.score(1)  # this would be the last person
+                self.set_score(1)  # this would be the last person
                 return "GONE"
                 # need to know the last person to have played a card for
                 # point
@@ -307,7 +306,7 @@ class Opponent(Contestant):
     #             # print(f"{self.hand=}")
     #             # print(f"{self.peg.count=}")
     #             self.peg.reset()
-    #             self.score(1)  # this would be the last person
+    #             self.set_score(1)  # this would be the last person
     #             return "GONE"
     #             # need to know the last person to have played a card for
     #             # point
